@@ -1,0 +1,36 @@
+::Lakala.configure do |config|
+  Base64.decode64('LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Fo\na2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRQ0hnQ1ZXOWhuZFpL\nWWYKUE52bDhSODZKZmxWZ1FZRVJHSEcvUE0yZ1BUelJjdVFqazJFRG5TVWZo\nMnpZVDY3U0RiNExyeUpHSVYyeENGbgpJOFJDd2VkblhsQ25EaVQ0STdsaFJF\ndzh3VmV2TDU5TTZjTWhYK0txWXhaRVZXK20vRERzcXJTMVNYY1FYdTJRCkxt\nQ0plcGpSN1VBams1Q2VDYmV1NlExKzZhUVAvcENrcXUrTFhSMzZZY2daYVdu\nZ0NLVEE4YWRVdEdRb0V4aFIKa1VVVXh2NGRoKzQrcVUyRHZjWi8rSGZpTjBk\nVEdqcFBKdjFtVVp3S05BcndkeFlpUzFqSnhQNUFiSFRGSURCZwpzeFc5dHNr\nQjUvRmZwTUdPMTAxSEdqSWR0WnYvVFN2SnpUaGJpeE1BWUcvVmpGdzRZcDNM\nSUtYV1RqVWd4Q09vCnJnK2VWYmZuQWdNQkFBRUNnZ0VBZEZlOE45bWhSYTNZ\nMFRPQklBTVRxK3JWRmV4dGpSWmwyZVJ3czlpditYMXgKRnRLSWpoMlhUYlNu\ncmRDT2UyRzdDUWVnREJySTVidnJibEtRZmoxZGdpekNGVjRZc2hLQ1pwaXMy\nUEd0WnhiOQpzWjE1Vk51dWxGdjF6NENJR0ptckxGbzZSUG9xU0IwcDMwVmkw\nRWc2bE8wZnlDdzQzT2s5Rk9xNEVzTnJnZXJtClh1OGtUQ2N2dzJ3T0FuYmpw\nV3BNQmExWVBvVDBLSUhZNHFNWkNzT0ZwdjhJTmtycGFWaHArTjFaTHVMU2dJ\nc24Ka2tyaTUzRGxXc0t0MGQxenROWk1XZnloc1BBM051ajh2NUZSaVg3OTNk\nUkg5aEdrWFgzWVdKcHpCSmd6cDgzMwoxbG5kbDM3K0Y5bE9yeEdoYUIyd0N3\nZG5ieHM1Y0FCeVlNRWwvaXBFK1FLQmdRRDErdkp2QVZkTTVJWjdnQ1ZlCm1N\nL1JIQUpweUQxZEpwbHoveDR0clBnTjFEUVNzeGlidy82dEtlSkszQmIzYnhD\nYmhmRHlQcVpXSmM0UkFxQ3oKODY2MTVaWHFaOW9ULzZ0ZGh4ZTNIQTZzZkxT\nbEl5RTBPMVYyYVRmRXJhVnd4SThMc3ZOdDRiZXdvQzd2d1VwRwpMMFk0VGRF\nSkR3OENEa3VNUmYwU2cvQVVxd0tCZ1FDTkJTRTEySFlrWWVING93MVN2bGsr\nYlo4QXR1Mmk5a3J0ClBnMzhtd1MrSFBlNSs1RVBRL3dzWTFDYWtFbU0vTnN2\nRXJmcldBNjROUE01UzV2VFQ1NHAvblBJd29mQ1RSR2gKT2lCL3B1WldMUU9P\ncGFsbGluMk15b2xwTGVacHlLcjVWTlFvdE1ya2RBcG1kYTJIQXlhWWN1RzI5\nbUF6K003dgovbGFJcXlkUnRRS0JnUUNJOG1EZENtc1hSVGZXTkY4Wnpvd05D\nTUlUTU1keFFCYzVMSFVaeXU0RGpQdzgyUGMvCmFadzF2bGJkaExGSXFzNGRP\nRElRUEc4UkVWVXJ4VUhCVGs4YnVDbUI2clhRWW94K3NzS3lVRzJlL0lMNlda\nZVgKNDl6TjR3Q0lnSURXU3FpMVE3a2htUVJTMHF1dkVmY1BJaXkvRmh2bUpq\nc2QwdVdld0N5SWpXb3hwd0tCZ0U0KwpER0VkeXQ4QTJDbmwvZHhzOUlNb3Ux\nSGdMUlYvNWE2Z0FZNm9UQWRYZHpOZm11cUhaQUVVMFlJUWtGNkRaUEZIClIz\naHlrU2d2YU12ZllZUHE1dXlSMjVnR0p1RHRkZHlvcmFObDdPTGZjdHZRbXA1\nV0tyYlZJVXlVUlFWb2EwU1AKaG05WGNFTTFCeGcyTHFOOFlndXZvZ0NyemxE\nSHVibDZ1blIxMGdrSkFvR0FaL2RqRC9nekltVmNHdmMvTXh5YwpEZkVrQnNF\nT2U3QnZpUkkvS1Rialp1VVV5eEdjMHd1cXhiR2JIV3MzVDJlcEx5RGFZcHRL\nU1R4RnVqV0l3a1ZBCkk2Zlc5VTFPaWhFVXQraXdqWFFCMThORlhXeUxUOUJF\nSU1QbklJRnF0YktJTDJyQ0lJdlpUNkpiRVJKMEVIWjQKY0dFTzJXN0FJU04v\nRXNFclZKSmFQV0E9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K\n')
+end
+
+def build_post_request(uri, headers, prepared_params)
+  request = ::Net::HTTP::Post.new(uri.path, headers)
+  request.body = prepared_params
+  request.content_type = 'application/json'
+  request
+end
+
+def build_uri(path)
+  uri = URI.parse('https://s2.lakala.com#{path}')
+  uri.scheme = 'https'
+  uri
+end
+
+def build_http(uri)
+  http = ::Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+  http
+end
+
+uri = build_uri('/api/v3/ccss/counter/order/special_create_encry')
+http = build_http(uri)
+
+prepared_body = { req_data: options, version: '3.0', req_time: Time.now.strftime('%Y%m%d%H%M%S') }.to_json
+
+request_body = ::Lakala::Cypher::Client.new.encrypt(prepared_body)
+
+headers = ::Lakala::HeaderGenerator.new(request_body, @serial_no = '1754463259649').generate
+
+request = build_post_request(uri, headers, request_body)
+
+a = http.request(request)
