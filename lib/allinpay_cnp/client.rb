@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module AllinpayCnp
-  # API 客户端 - 负责 API 方法和参数构建
   class Client
     VERSION = 'V2.0.0'
 

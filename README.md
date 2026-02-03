@@ -1,131 +1,82 @@
-# AllinpayCnp
+AllinpayCnp
+Allinpay CNP Cross-border Credit Card Payment Ruby SDK. 通联支付 CNP 跨境信用卡收单 Ruby SDK。
 
-通联支付 CNP 跨境信用卡收单 Ruby SDK。
+1. Installation / 安装
+Add to your Gemfile: 在 Gemfile 中添加：
 
-## 安装
+Ruby
+gem 'allinpay_cnp', git: 'https://github.com/CoolDrinELiu/allinpay'
+2. Configuration / 配置
+Rails Project / Rails 项目
+Create config/initializers/allinpay_cnp.rb: 创建初始化文件：
 
-### 方式一：从本地安装
+Ruby
+AllinpayCnp.configure do |config|
+  config.merchant_id = Rails.application.credentials.dig(:allinpay, :merchant_id)
+  config.private_key = Rails.application.credentials.dig(:allinpay, :private_key)
+  config.public_key  = Rails.application.credentials.dig(:allinpay, :public_key)
+  config.environment = Rails.env.production? ? :production : :test
+  config.logger      = Rails.logger
+end
+3. Usage / 使用方法
+Unified Pay / 统一收银台支付
+Redirect users to Allinpay payment page. 跳转至通联支付页面完成支付。
 
-```bash
-cd allinpay_cnp
-gem build allinpay_cnp.gemspec
-gem install allinpay_cnp-0.1.0.gem
-```
+Ruby
+client = AllinpayCnp.client
 
-### 方式二：Gemfile 引用
-
-```ruby
-# Gemfile
-gem 'allinpay_cnp', path: '/path/to/allinpay_cnp'
-
-# 或 git
-gem 'allinpay_cnp', git: 'https://github.com/your-org/allinpay_cnp'
-```
-
-然后运行：
-
-```bash
-bundle install
-```
-
-## 使用方法
-
-### 1. 创建客户端
-
-```ruby
-require 'allinpay_cnp'
-
-client = AllinpayCnp.client(
-  merchant_id: '086310030670001',
-  private_key: File.read('private_key.pem'),
-  public_key: File.read('public_key.pem'),  # 可选，用于验签
-  environment: :test                         # :test 或 :production
-)
-```
-
-### 2. 统一收银台支付
-
-```ruby
 response = client.unified_pay(
-  access_order_id: 'ORDER_#{Time.now.to_i}',
+  access_order_id: "ORDER_#{Time.now.to_i}",
   amount: '100.00',
   currency: 'HKD',
-  notify_url: 'https://your-domain.com/callback',
-  return_url: 'https://your-domain.com/return',
+  notify_url: 'https://your-domain.com/webhooks/allinpay',
+  return_url: 'https://your-domain.com/payments/complete',
   email: 'customer@example.com',
-  shipping: {
-    first_name: 'Peter',
-    last_name: 'Zhang',
-    address1: '123 Test Street',
-    city: 'Hong Kong',
-    country: 'HK'
+  shipping: { 
+    first_name: 'Peter', last_name: 'Zhang', address1: '123 Test St', 
+    city: 'HK', country: 'HK', zip_code: '000000', phone: '12345678' 
   }
 )
 
-if response.success?
-  redirect_to response.payment_url
-else
-  puts 'Error: #{response.result_desc}'
-end
-```
+redirect_to response.payment_url if response.success?
+Query & Refund / 查询与退款
+Ruby
+# Query Order / 查询订单
+response = client.query('ORIGINAL_ORDER_123')
+puts response.status if response.success? # SUCCESS, FAIL, PROCESSING
 
-### 3. 查询订单
-
-```ruby
-response = client.query('ORDER_123')
-
-if response.success?
-  puts '状态: #{response.status}'
-  puts '金额: #{response.amount}'
-end
-```
-
-### 4. 退款
-
-```ruby
+# Refund / 退款
 response = client.refund(
-  ori_access_order_id: 'ORDER_123',
+  ori_access_order_id: 'ORIGINAL_ORDER_123',
   refund_amount: '50.00'
 )
+Handle Webhook / 验证异步回调
+Verify the signature and handle payment results. 验证签名并处理支付结果。
 
-puts response.success? ? '退款成功' : '退款失败: #{response.result_desc}'
-```
-
-### 5. 处理回调
-
-```ruby
-# Rails Controller
-class WebhooksController < ApplicationController
-  skip_before_action :verify_authenticity_token
-
-  def allinpay_callback
-    unless client.verify_callback(params.to_unsafe_h)
-      render plain: 'FAIL' and return
-    end
-
-    if params[:resultCode] == '0000'
-      # 处理支付成功
-    end
-
-    render plain: 'SUCCESS'
+Ruby
+def allinpay
+  client = AllinpayCnp.client
+  
+  # Verify Signature / 验证签名
+  unless client.verify_callback(params.to_unsafe_h)
+    render plain: 'FAIL' and return
   end
+
+  if params[:resultCode] == '0000'
+    # Handle business logic / 处理业务逻辑
+  end
+
+  render plain: 'SUCCESS' # Must return SUCCESS / 必须返回 SUCCESS
 end
-```
+4. Response Object / 响应对象
+Every API call returns a Response object. 所有 API 调用均返回 Response 对象：
 
-## API 地址
+response.success?: Boolean result / 是否成功
 
-| 环境 | 地址 |
-|------|------|
-| 测试 | https://cnp-test.allinpay.com/gateway/cnp/unifiedPay |
-| 生产 | https://cnp.allinpay.com/gateway/cnp/unifiedPay |
+response.result_desc: Error message / 错误描述
 
-## 运行测试
+response.payment_url: Gateway URL / 支付跳转地址
 
-```bash
-bundle install
-bundle exec rspec
-```
+response.status: Order status for query / 订单状态
 
-## License
-
-MIT
+response.body: Raw response Hash / 原始响应数据

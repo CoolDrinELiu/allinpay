@@ -6,8 +6,6 @@ module AllinpayCnp
   class Response
     SUCCESS_CODE = '0000'
 
-    attr_reader :http_response, :error, :public_key
-
     def initialize(http_response, error: nil, public_key: nil)
       @http_response = http_response
       @error = error
@@ -124,6 +122,8 @@ module AllinpayCnp
     end
 
     private
+
+    attr_reader :http_response, :error, :public_key
 
     def parse_body
       return { 'resultCode' => 'NETWORK_ERROR', 'resultDesc' => @error.message } if @error
