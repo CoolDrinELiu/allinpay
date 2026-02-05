@@ -75,8 +75,7 @@ RSpec.describe AllinpayCnp::Client do
         access_order_id: 'ORDER_123',
         amount: '100.00',
         currency: 'HKD',
-        notify_url: 'https://example.com/callback',
-        return_url: 'https://example.com/return'
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' }
       )
 
       expect(response.success?).to be true
@@ -99,8 +98,7 @@ RSpec.describe AllinpayCnp::Client do
         access_order_id: 'ORDER_123',
         amount: '100.00',
         currency: 'HKD',
-        notify_url: 'https://example.com/callback',
-        return_url: 'https://example.com/return'
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' }
       )
 
       expect(stub).to have_been_requested
@@ -120,8 +118,7 @@ RSpec.describe AllinpayCnp::Client do
         access_order_id: 'ORDER_123',
         amount: '100.00',
         currency: 'HKD',
-        notify_url: 'https://example.com/callback',
-        return_url: 'https://example.com/return',
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
         shipping: {
           first_name: 'Peter',
           last_name: 'Zhang',
@@ -150,8 +147,7 @@ RSpec.describe AllinpayCnp::Client do
         access_order_id: 'ORDER_123',
         amount: '100.00',
         currency: 'USD',
-        notify_url: 'https://example.com/callback',
-        return_url: 'https://example.com/return',
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
         billing: {
           first_name: 'John',
           last_name: 'Doe',
@@ -176,8 +172,7 @@ RSpec.describe AllinpayCnp::Client do
         access_order_id: 'ORDER_123',
         amount: '100.00',
         currency: 'HKD',
-        notify_url: 'https://example.com/callback',
-        return_url: 'https://example.com/return',
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
         email: 'test@example.com'
       )
 
@@ -193,8 +188,7 @@ RSpec.describe AllinpayCnp::Client do
         access_order_id: 'ORDER_123',
         amount: '100.00',
         currency: 'HKD',
-        notify_url: 'https://example.com/callback',
-        return_url: 'https://example.com/return'
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' }
       )
 
       expect(stub).to have_been_requested
@@ -221,26 +215,6 @@ RSpec.describe AllinpayCnp::Client do
       expect(stub).to have_been_requested
       expect(response.success?).to be true
       expect(response.status).to eq('SUCCESS')
-    end
-
-    it 'auto generates accessOrderId if not provided' do
-      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
-        .with { |req| req.body.include?('accessOrderId=') }
-        .to_return(status: 200, body: '{"resultCode":"0000"}')
-
-      client.query('ORDER_ORIGINAL')
-
-      expect(stub).to have_been_requested
-    end
-
-    it 'uses provided accessOrderId' do
-      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
-        .with { |req| req.body.include?('accessOrderId=CUSTOM_QUERY_ID') }
-        .to_return(status: 200, body: '{"resultCode":"0000"}')
-
-      client.query('ORDER_ORIGINAL', access_order_id: 'CUSTOM_QUERY_ID')
-
-      expect(stub).to have_been_requested
     end
 
     it 'returns order status information' do
@@ -282,16 +256,6 @@ RSpec.describe AllinpayCnp::Client do
 
       expect(stub).to have_been_requested
       expect(response.success?).to be true
-    end
-
-    it 'auto generates accessOrderId if not provided' do
-      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
-        .with { |req| req.body.include?('accessOrderId=') }
-        .to_return(status: 200, body: '{"resultCode":"0000"}')
-
-      client.refund(ori_access_order_id: 'ORDER_123', refund_amount: '50.00')
-
-      expect(stub).to have_been_requested
     end
 
     it 'uses provided accessOrderId' do

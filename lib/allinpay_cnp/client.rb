@@ -4,24 +4,22 @@ module AllinpayCnp
   class Client
     VERSION = 'V2.0.0'
 
-    def unified_pay(access_order_id:, amount:, currency:, notify_url:, return_url:, **options)
+    def unified_pay(access_order_id:, amount:, currency:, urls:, **options)
       params = build_unified_pay_params(
         access_order_id: access_order_id,
         amount: amount,
         currency: currency,
-        notify_url: notify_url,
-        return_url: return_url,
+        urls: urls,
         **options
       )
       request.post(:unified_pay, params)
     end
 
-    def query(ori_access_order_id, access_order_id: nil)
+    def query(ori_access_order_id)
       params = {
         version: VERSION,
         mchtId: config.merchant_id,
         transType: 'Query',
-        accessOrderId: access_order_id || generate_order_id,
         oriAccessOrderId: ori_access_order_id
       }
       request.post(:quickpay, params)
@@ -32,7 +30,7 @@ module AllinpayCnp
         version: VERSION,
         mchtId: config.merchant_id,
         transType: 'Refund',
-        accessOrderId: access_order_id || generate_order_id,
+        accessOrderId: access_order_id,
         oriAccessOrderId: ori_access_order_id,
         refundAmount: refund_amount.to_s
       }
@@ -55,26 +53,35 @@ module AllinpayCnp
       @request ||= Request.new
     end
 
-    def generate_order_id
-      "#{Time.now.to_i}#{rand(1000..9999)}"
-    end
-
-    def build_unified_pay_params(access_order_id:, amount:, currency:, notify_url:, return_url:, **options)
-      build_base_params(access_order_id, amount, currency, notify_url, return_url, options)
+    def build_unified_pay_params(access_order_id:, amount:, currency:, urls:, **options)
+      build_base_params(access_order_id, amount, currency, urls, options)
         .merge(build_shipping_params(options))
         .merge(build_billing_params(options))
         .compact
     end
 
-    def build_base_params(access_order_id, amount, currency, notify_url, return_url, options)
+    def build_base_params(access_order_id, amount, currency, urls, options)
+      build_order_core_params(access_order_id, amount, currency)
+        .merge(notify_return_urls(urls))
+        .merge(build_base_option_params(options))
+    end
+
+    def build_order_core_params(access_order_id, amount, currency)
       {
         version: VERSION,
         mchtId: config.merchant_id,
         accessOrderId: access_order_id,
         amount: amount.to_s,
-        currency: currency,
-        notifyUrl: notify_url,
-        returnUrl: return_url,
+        currency: currency
+      }
+    end
+
+    def notify_return_urls(urls)
+      { notifyUrl: urls[:notify_url], returnUrl: urls[:return_url] }
+    end
+
+    def build_base_option_params(options)
+      {
         language: options[:language] || 'zh-hant',
         email: options[:email],
         productInfo: options[:product_info]&.to_json

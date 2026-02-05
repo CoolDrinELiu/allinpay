@@ -175,7 +175,7 @@ RSpec.describe AllinpayCnp::Request do
 
       expect(response).to be_a(AllinpayCnp::Response)
       expect(response.success?).to be false
-      expect(response.error).to be_a(Faraday::Error)
+      expect(response.send(:error)).to be_a(Faraday::Error)
     end
   end
 end
