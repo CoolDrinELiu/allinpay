@@ -52,7 +52,7 @@ module AllinpayCnp
     end
 
     def payment_url
-      body['paymentUrl'] || body['counterUrl'] || body['url']
+      body['payUrl']
     end
 
     def status

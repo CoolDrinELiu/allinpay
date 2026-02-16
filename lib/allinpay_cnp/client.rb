@@ -12,6 +12,7 @@ module AllinpayCnp
         urls: urls,
         **options
       )
+
       request.post(:unified_pay, params)
     end
 
@@ -25,14 +26,15 @@ module AllinpayCnp
       request.post(:quickpay, params)
     end
 
-    def refund(ori_access_order_id:, refund_amount:, access_order_id: nil)
+    def refund(ori_access_order_id:, refund_amount:, access_order_id: nil, notify_url: nil)
       params = {
         version: VERSION,
         mchtId: config.merchant_id,
         transType: 'Refund',
-        accessOrderId: access_order_id,
+        accessOrderId: access_order_id || generate_order_id,
         oriAccessOrderId: ori_access_order_id,
-        refundAmount: refund_amount.to_s
+        refundAmount: refund_amount.to_s,
+        notifyUrl: notify_url
       }
       request.post(:quickpay, params)
     end
@@ -44,6 +46,10 @@ module AllinpayCnp
     end
 
     private
+
+    def generate_order_id
+      Time.current.strftime('%Y%m%d%H%M%S%L')
+    end
 
     def config
       AllinpayCnp.config
