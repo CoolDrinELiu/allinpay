@@ -4,7 +4,15 @@ module AllinpayCnp
   class Client
     VERSION = 'V2.0.0'
 
-    def unified_pay(access_order_id:, amount:, currency:, urls:, **options)
+    def unified_pay(hash_or_opts = nil, **kwargs)
+      opts = (hash_or_opts || {}).merge(kwargs).transform_keys(&:to_sym)
+
+      access_order_id = opts.fetch(:access_order_id)
+      amount          = opts.fetch(:amount)
+      currency        = opts.fetch(:currency)
+      urls            = opts.fetch(:urls)
+      options         = opts.except(:access_order_id, :amount, :currency, :urls)
+
       params = build_unified_pay_params(
         access_order_id: access_order_id,
         amount: amount,
@@ -16,26 +24,38 @@ module AllinpayCnp
       request.post(:unified_pay, params)
     end
 
-    def query(ori_access_order_id)
+    def query(hash_or_opts = nil, **kwargs)
+      opts = (hash_or_opts || {}).merge(kwargs).transform_keys(&:to_sym)
+
+      merchant_no = opts.fetch(:merchant_no, config.merchant_id)
+      ori_access_order_id = opts.fetch(:ori_access_order_id)
+
       params = {
         version: VERSION,
-        mchtId: config.merchant_id,
+        mchtId: merchant_no,
         transType: 'Query',
         oriAccessOrderId: ori_access_order_id
       }
       request.post(:quickpay, params)
     end
 
-    def refund(ori_access_order_id:, refund_amount:, access_order_id: nil, notify_url: nil)
+    def refund(hash_or_opts = nil, **kwargs)
+      opts = (hash_or_opts || {}).merge(kwargs).transform_keys(&:to_sym)
+
+      merchant_no = opts.fetch(:merchant_no)
+      ori_access_order_id = opts.fetch(:ori_access_order_id)
+      refund_amount = opts.fetch(:refund_amount)
+      access_order_id = opts.fetch(:access_order_id, generate_order_id)
+
       params = {
         version: VERSION,
-        mchtId: config.merchant_id,
+        mchtId: merchant_no,
         transType: 'Refund',
-        accessOrderId: access_order_id || generate_order_id,
+        accessOrderId: access_order_id,
         oriAccessOrderId: ori_access_order_id,
         refundAmount: refund_amount.to_s,
-        notifyUrl: notify_url
-      }
+        notifyUrl: opts.fetch(:notify_url, nil)
+      }.reject { |_, v| v.nil? }
       request.post(:quickpay, params)
     end
 
@@ -48,7 +68,7 @@ module AllinpayCnp
     private
 
     def generate_order_id
-      Time.current.strftime('%Y%m%d%H%M%S%L')
+      Time.now.to_i.to_s
     end
 
     def config
@@ -59,23 +79,23 @@ module AllinpayCnp
       @request ||= Request.new
     end
 
-    def build_unified_pay_params(access_order_id:, amount:, currency:, urls:, **options)
+    def build_unified_pay_params(access_order_id:, amount:, currency:, urls:, merchant_no: nil, **options)
       build_base_params(access_order_id, amount, currency, urls, options)
         .merge(build_shipping_params(options))
         .merge(build_billing_params(options))
         .compact
     end
 
-    def build_base_params(access_order_id, amount, currency, urls, options)
-      build_order_core_params(access_order_id, amount, currency)
+    def build_base_params(access_order_id, amount, currency, urls, options, merchant_no = nil)
+      build_order_core_params(access_order_id, amount, currency, merchant_no)
         .merge(notify_return_urls(urls))
         .merge(build_base_option_params(options))
     end
 
-    def build_order_core_params(access_order_id, amount, currency)
+    def build_order_core_params(access_order_id, amount, currency, merchant_no = nil)
       {
         version: VERSION,
-        mchtId: config.merchant_id,
+        mchtId: merchant_no || config.merchant_id,
         accessOrderId: access_order_id,
         amount: amount.to_s,
         currency: currency

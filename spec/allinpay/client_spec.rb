@@ -68,7 +68,7 @@ RSpec.describe AllinpayCnp::Client do
       stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
         .to_return(
           status: 200,
-          body: '{"resultCode":"0000","resultDesc":"Success","paymentUrl":"https://cnp-test.allinpay.com/checkout/xxx"}'
+          body: '{"resultCode":"0000","resultDesc":"Success","payUrl":"https://cnp-test.allinpay.com/checkout/xxx"}'
         )
 
       response = client.unified_pay(
@@ -210,7 +210,7 @@ RSpec.describe AllinpayCnp::Client do
           body: '{"resultCode":"0000","status":"SUCCESS","amount":"100.00","currency":"HKD"}'
         )
 
-      response = client.query('ORDER_ORIGINAL')
+      response = client.query(ori_access_order_id: 'ORDER_ORIGINAL')
 
       expect(stub).to have_been_requested
       expect(response.success?).to be true
@@ -224,7 +224,7 @@ RSpec.describe AllinpayCnp::Client do
           body: '{"resultCode":"0000","status":"SUCCESS","statusDesc":"交易成功","amount":"100.00","currency":"HKD","cardNo":"462419******0019","cardOrgn":"VISA"}'
         )
 
-      response = client.query('ORDER_123')
+      response = client.query(ori_access_order_id: 'ORDER_123')
 
       expect(response.status).to eq('SUCCESS')
       expect(response.status_desc).to eq('交易成功')
@@ -250,6 +250,7 @@ RSpec.describe AllinpayCnp::Client do
         )
 
       response = client.refund(
+        merchant_no: merchant_id,
         ori_access_order_id: 'ORDER_ORIGINAL',
         refund_amount: '50.00'
       )
@@ -264,6 +265,7 @@ RSpec.describe AllinpayCnp::Client do
         .to_return(status: 200, body: '{"resultCode":"0000"}')
 
       client.refund(
+        merchant_no: merchant_id,
         ori_access_order_id: 'ORDER_123',
         refund_amount: '50.00',
         access_order_id: 'REFUND_ORDER_123'
@@ -277,7 +279,7 @@ RSpec.describe AllinpayCnp::Client do
         .with { |req| req.body.include?('refundAmount=50.5') }
         .to_return(status: 200, body: '{"resultCode":"0000"}')
 
-      client.refund(ori_access_order_id: 'ORDER_123', refund_amount: 50.5)
+      client.refund(merchant_no: merchant_id, ori_access_order_id: 'ORDER_123', refund_amount: 50.5)
 
       expect(stub).to have_been_requested
     end
