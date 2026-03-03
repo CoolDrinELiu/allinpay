@@ -4,7 +4,7 @@ module AllinpayCnp
   class Config
     ENVIRONMENTS = %i[test production].freeze
 
-    attr_accessor :merchant_id, :private_key, :public_key, :logger, :timeout
+    attr_accessor :merchant_id, :private_key, :public_key, :logger, :timeout, :inst_no
     attr_reader :environment
 
     def initialize
