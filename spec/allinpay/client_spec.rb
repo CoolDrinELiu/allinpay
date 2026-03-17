@@ -193,6 +193,61 @@ RSpec.describe AllinpayCnp::Client do
 
       expect(stub).to have_been_requested
     end
+
+    it 'uses custom language when provided' do
+      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+        .with { |req| req.body.include?('language=en') }
+        .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+      client.unified_pay(
+        access_order_id: 'ORDER_123',
+        amount: '100.00',
+        currency: 'HKD',
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
+        language: 'en'
+      )
+
+      expect(stub).to have_been_requested
+    end
+
+    it 'uses custom merchant_no when provided' do
+      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+        .with { |req| req.body.include?('mchtId=CUSTOM_MERCHANT') }
+        .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+      client.unified_pay(
+        access_order_id: 'ORDER_123',
+        amount: '100.00',
+        currency: 'HKD',
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
+        merchant_no: 'CUSTOM_MERCHANT'
+      )
+
+      expect(stub).to have_been_requested
+    end
+
+    it 'includes product_info as JSON when provided' do
+      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+        .with { |req| req.body.include?('productInfo=') }
+        .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+      client.unified_pay(
+        access_order_id: 'ORDER_123',
+        amount: '100.00',
+        currency: 'HKD',
+        urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
+        product_info: [{ sku: '123', productName: 'Test', price: '10.00', quantity: '1' }]
+      )
+
+      expect(stub).to have_been_requested
+    end
+
+    it 'raises KeyError when required params are missing' do
+      stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+        .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+      expect { client.unified_pay(amount: '100.00', currency: 'HKD') }.to raise_error(KeyError)
+    end
   end
 
   describe '#query' do
@@ -230,6 +285,20 @@ RSpec.describe AllinpayCnp::Client do
       expect(response.status_desc).to eq('交易成功')
       expect(response.card_no).to eq('462419******0019')
       expect(response.card_orgn).to eq('VISA')
+    end
+
+    it 'uses custom merchant_no when provided' do
+      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+        .with { |req| req.body.include?('mchtId=CUSTOM_MERCHANT') }
+        .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+      client.query(ori_access_order_id: 'ORDER_123', merchant_no: 'CUSTOM_MERCHANT')
+
+      expect(stub).to have_been_requested
+    end
+
+    it 'raises KeyError when ori_access_order_id is missing' do
+      expect { client.query({}) }.to raise_error(KeyError)
     end
   end
 
@@ -282,6 +351,39 @@ RSpec.describe AllinpayCnp::Client do
       client.refund(merchant_no: merchant_id, ori_access_order_id: 'ORDER_123', refund_amount: 50.5)
 
       expect(stub).to have_been_requested
+    end
+
+    it 'includes notify_url when provided' do
+      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+        .with { |req| req.body.include?('notifyUrl=https%3A%2F%2Fexample.com%2Frefund_callback') }
+        .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+      client.refund(
+        merchant_no: merchant_id,
+        ori_access_order_id: 'ORDER_123',
+        refund_amount: '50.00',
+        notify_url: 'https://example.com/refund_callback'
+      )
+
+      expect(stub).to have_been_requested
+    end
+
+    it 'generates accessOrderId when not provided' do
+      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+        .with { |req| req.body.include?('accessOrderId=') }
+        .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+      client.refund(
+        merchant_no: merchant_id,
+        ori_access_order_id: 'ORDER_123',
+        refund_amount: '50.00'
+      )
+
+      expect(stub).to have_been_requested
+    end
+
+    it 'raises KeyError when required params are missing' do
+      expect { client.refund(merchant_no: merchant_id) }.to raise_error(KeyError)
     end
   end
 

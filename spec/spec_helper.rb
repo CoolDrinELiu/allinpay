@@ -13,4 +13,9 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  # Reset global config between tests to prevent state leakage
+  config.after(:each) do
+    AllinpayCnp.instance_variable_set(:@config, nil)
+  end
 end

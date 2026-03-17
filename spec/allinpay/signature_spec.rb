@@ -269,5 +269,25 @@ PEM
 
       expect(result).to be false
     end
+
+    it 'works with string keys' do
+      params = { 'version' => 'V2.0.0', 'mchtId' => '086310030670001' }
+      signature = described_class.sign(params, doc_private_key)
+      params_with_sign = params.merge('sign' => signature)
+
+      result = described_class.verify(params_with_sign, public_key)
+
+      expect(result).to be true
+    end
+
+    it 'works with mixed string and symbol keys' do
+      params = { version: 'V2.0.0', 'mchtId' => '086310030670001' }
+      signature = described_class.sign(params, doc_private_key)
+      params_with_sign = params.merge(sign: signature)
+
+      result = described_class.verify(params_with_sign, public_key)
+
+      expect(result).to be true
+    end
   end
 end

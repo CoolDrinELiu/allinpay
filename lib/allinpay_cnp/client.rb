@@ -80,7 +80,7 @@ module AllinpayCnp
     end
 
     def build_unified_pay_params(access_order_id:, amount:, currency:, urls:, merchant_no: nil, **options)
-      build_base_params(access_order_id, amount, currency, urls, options)
+      build_base_params(access_order_id, amount, currency, urls, options, merchant_no)
         .merge(build_shipping_params(options))
         .merge(build_billing_params(options))
         .compact

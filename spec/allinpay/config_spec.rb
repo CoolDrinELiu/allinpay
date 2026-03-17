@@ -95,4 +95,15 @@ RSpec.describe AllinpayCnp::Config do
       expect(config.timeout).to eq(60)
     end
   end
+
+  describe '#inst_no' do
+    it 'can be set and retrieved' do
+      config.inst_no = 'INST001'
+      expect(config.inst_no).to eq('INST001')
+    end
+
+    it 'defaults to nil' do
+      expect(config.inst_no).to be_nil
+    end
+  end
 end

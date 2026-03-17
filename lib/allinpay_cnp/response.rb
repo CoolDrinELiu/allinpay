@@ -16,7 +16,7 @@ module AllinpayCnp
     def http_success?
       return false if @error
 
-      @http_response&.success?
+      @http_response&.success? == true
     end
 
     def success?

@@ -52,7 +52,7 @@ module AllinpayCnp
         if key_content.include?('-----BEGIN')
           OpenSSL::PKey::RSA.new(key_content)
         else
-          pem = '-----BEGIN PRIVATE KEY-----\n#{key_content}\n-----END PRIVATE KEY-----'
+          pem = "-----BEGIN PRIVATE KEY-----\n#{key_content}\n-----END PRIVATE KEY-----"
           OpenSSL::PKey::RSA.new(pem)
         end
       end
