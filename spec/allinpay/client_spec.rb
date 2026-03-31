@@ -248,6 +248,40 @@ RSpec.describe AllinpayCnp::Client do
 
       expect { client.unified_pay(amount: '100.00', currency: 'HKD') }.to raise_error(KeyError)
     end
+
+    context 'with inst_no configured' do
+      before { AllinpayCnp.config.inst_no = '00000001' }
+
+      it 'includes instNo in request' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+          .with { |req| req.body.include?('instNo=00000001') }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.unified_pay(
+          access_order_id: 'ORDER_123', amount: '100.00', currency: 'HKD',
+          urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' }
+        )
+
+        expect(stub).to have_been_requested
+      end
+    end
+
+    context 'without inst_no configured' do
+      before { AllinpayCnp.config.inst_no = nil }
+
+      it 'excludes instNo from request' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+          .with { |req| !req.body.include?('instNo') }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.unified_pay(
+          access_order_id: 'ORDER_123', amount: '100.00', currency: 'HKD',
+          urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' }
+        )
+
+        expect(stub).to have_been_requested
+      end
+    end
   end
 
   describe '#query' do
@@ -297,8 +331,32 @@ RSpec.describe AllinpayCnp::Client do
       expect(stub).to have_been_requested
     end
 
+    it 'includes accessOrderId in request' do
+      stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+        .with { |req| req.body.include?('accessOrderId=') }
+        .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+      client.query(ori_access_order_id: 'ORDER_123')
+
+      expect(stub).to have_been_requested
+    end
+
     it 'raises KeyError when ori_access_order_id is missing' do
       expect { client.query({}) }.to raise_error(KeyError)
+    end
+
+    context 'with inst_no configured' do
+      before { AllinpayCnp.config.inst_no = '00000001' }
+
+      it 'includes instNo in request' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+          .with { |req| req.body.include?('instNo=00000001') }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.query(ori_access_order_id: 'ORDER_123')
+
+        expect(stub).to have_been_requested
+      end
     end
   end
 
@@ -384,6 +442,24 @@ RSpec.describe AllinpayCnp::Client do
 
     it 'raises KeyError when required params are missing' do
       expect { client.refund(merchant_no: merchant_id) }.to raise_error(KeyError)
+    end
+
+    context 'with inst_no configured' do
+      before { AllinpayCnp.config.inst_no = '00000001' }
+
+      it 'includes instNo in request' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+          .with { |req| req.body.include?('instNo=00000001') }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.refund(
+          merchant_no: merchant_id,
+          ori_access_order_id: 'ORDER_123',
+          refund_amount: '50.00'
+        )
+
+        expect(stub).to have_been_requested
+      end
     end
   end
 

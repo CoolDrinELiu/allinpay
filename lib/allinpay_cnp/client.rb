@@ -32,10 +32,12 @@ module AllinpayCnp
 
       params = {
         version: VERSION,
+        instNo: inst_no_param,
         mchtId: merchant_no,
         transType: 'Query',
+        accessOrderId: generate_order_id,
         oriAccessOrderId: ori_access_order_id
-      }
+      }.compact
       request.post(:quickpay, params)
     end
 
@@ -49,6 +51,7 @@ module AllinpayCnp
 
       params = {
         version: VERSION,
+        instNo: inst_no_param,
         mchtId: merchant_no,
         transType: 'Refund',
         accessOrderId: access_order_id,
@@ -69,6 +72,11 @@ module AllinpayCnp
 
     def generate_order_id
       Time.now.to_i.to_s
+    end
+
+    def inst_no_param
+      val = config.inst_no
+      (val.nil? || val.to_s.strip.empty?) ? nil : val.to_s.strip
     end
 
     def config
@@ -95,11 +103,12 @@ module AllinpayCnp
     def build_order_core_params(access_order_id, amount, currency, merchant_no = nil)
       {
         version: VERSION,
+        instNo: inst_no_param,
         mchtId: merchant_no || config.merchant_id,
         accessOrderId: access_order_id,
         amount: amount.to_s,
         currency: currency
-      }
+      }.compact
     end
 
     def notify_return_urls(urls)
