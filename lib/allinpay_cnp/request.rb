@@ -16,13 +16,13 @@ module AllinpayCnp
       }
     }.freeze
 
-    def post(endpoint_type, params)
-      sign_params(params)
+    def post(endpoint_type, params, private_key: nil, public_key: nil)
+      sign_params(params, private_key)
       url = build_url(endpoint_type)
       log_request(url, params)
       response = send_post(url, params)
       log_response(response)
-      Response.new(response, public_key: config.public_key)
+      Response.new(response, public_key: public_key || config.public_key)
     rescue Faraday::Error => e
       log_error(e.message)
       Response.new(nil, error: e)
@@ -34,9 +34,9 @@ module AllinpayCnp
       AllinpayCnp.config
     end
 
-    def sign_params(params)
+    def sign_params(params, private_key = nil)
       params[:signType] = 'RSA2'
-      params[:sign] = Signature.sign(params, config.private_key)
+      params[:sign] = Signature.sign(params, private_key || config.private_key)
     end
 
     def build_url(endpoint_type)

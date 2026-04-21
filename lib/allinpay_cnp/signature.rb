@@ -18,7 +18,7 @@ module AllinpayCnp
 
         sign_string = build_sign_string(params)
         rsa_verify(sign_string, signature, public_key)
-      rescue StandardError
+      rescue OpenSSL::PKey::PKeyError, OpenSSL::OpenSSLError
         false
       end
 
@@ -49,7 +49,7 @@ module AllinpayCnp
       end
 
       def load_private_key(key_content)
-        if key_content.include?('-----BEGIN')
+        if key_content.include?('-----BEGIN PRIVATE KEY') || key_content.include?('-----BEGIN RSA PRIVATE KEY')
           OpenSSL::PKey::RSA.new(key_content)
         else
           pem = "-----BEGIN PRIVATE KEY-----\n#{key_content}\n-----END PRIVATE KEY-----"
@@ -58,7 +58,7 @@ module AllinpayCnp
       end
 
       def load_public_key(key_content)
-        if key_content.include?('-----BEGIN')
+        if key_content.include?('-----BEGIN PUBLIC KEY')
           OpenSSL::PKey::RSA.new(key_content)
         else
           pem = "-----BEGIN PUBLIC KEY-----\n#{key_content}\n-----END PUBLIC KEY-----"

@@ -11,7 +11,9 @@ module AllinpayCnp
       amount          = opts.fetch(:amount)
       currency        = opts.fetch(:currency)
       urls            = opts.fetch(:urls)
-      options         = opts.except(:access_order_id, :amount, :currency, :urls)
+      private_key     = opts[:private_key]
+      public_key      = opts[:public_key]
+      options         = opts.except(:access_order_id, :amount, :currency, :urls, :private_key, :public_key)
 
       params = build_unified_pay_params(
         access_order_id: access_order_id,
@@ -21,7 +23,7 @@ module AllinpayCnp
         **options
       )
 
-      request.post(:unified_pay, params)
+      request.post(:unified_pay, params, private_key: private_key, public_key: public_key)
     end
 
     def query(hash_or_opts = nil, **kwargs)
@@ -29,6 +31,8 @@ module AllinpayCnp
 
       merchant_no = opts.fetch(:merchant_no, config.merchant_id)
       ori_access_order_id = opts.fetch(:ori_access_order_id)
+      private_key = opts[:private_key]
+      public_key  = opts[:public_key]
 
       params = {
         version: VERSION,
@@ -38,16 +42,18 @@ module AllinpayCnp
         accessOrderId: generate_order_id,
         oriAccessOrderId: ori_access_order_id
       }.compact
-      request.post(:quickpay, params)
+      request.post(:quickpay, params, private_key: private_key, public_key: public_key)
     end
 
     def refund(hash_or_opts = nil, **kwargs)
       opts = (hash_or_opts || {}).merge(kwargs).transform_keys(&:to_sym)
 
-      merchant_no = opts.fetch(:merchant_no)
+      merchant_no = opts.fetch(:merchant_no, config.merchant_id)
       ori_access_order_id = opts.fetch(:ori_access_order_id)
       refund_amount = opts.fetch(:refund_amount)
       access_order_id = opts.fetch(:access_order_id, generate_order_id)
+      private_key = opts[:private_key]
+      public_key  = opts[:public_key]
 
       params = {
         version: VERSION,
@@ -59,19 +65,20 @@ module AllinpayCnp
         refundAmount: refund_amount.to_s,
         notifyUrl: opts.fetch(:notify_url, nil)
       }.reject { |_, v| v.nil? }
-      request.post(:quickpay, params)
+      request.post(:quickpay, params, private_key: private_key, public_key: public_key)
     end
 
-    def verify_callback(params)
-      return false unless config.public_key
+    def verify_callback(params, public_key: nil)
+      key = public_key || config.public_key
+      return false unless key
 
-      Signature.verify(params, config.public_key)
+      Signature.verify(params, key)
     end
 
     private
 
     def generate_order_id
-      Time.now.to_i.to_s
+      (Time.now.to_f * 1000).to_i.to_s
     end
 
     def inst_no_param

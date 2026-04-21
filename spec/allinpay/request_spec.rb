@@ -177,5 +177,52 @@ RSpec.describe AllinpayCnp::Request do
       expect(response.success?).to be false
       expect(response.send(:error)).to be_a(Faraday::Error)
     end
+
+    context 'with per-call credential overrides' do
+      let(:other_keypair) { OpenSSL::PKey::RSA.new(2048) }
+      let(:other_private_key) { other_keypair.to_pem }
+      let(:other_public_key) { other_keypair.public_key.to_pem }
+
+      it 'signs with the override private_key when provided' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+               .with { |req|
+                 parsed = URI.decode_www_form(req.body).to_h
+                 AllinpayCnp::Signature.verify(parsed, other_public_key)
+               }
+               .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        described_class.new.post(:quickpay, { mchtId: merchant_id }, private_key: other_private_key)
+
+        expect(stub).to have_been_requested
+      end
+
+      it 'uses the override public_key for the returned Response' do
+        response_body = { 'resultCode' => '0000', 'amount' => '100' }
+        response_body['sign'] = AllinpayCnp::Signature.sign(response_body, other_private_key)
+
+        stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+          .to_return(status: 200, body: response_body.to_json)
+
+        response = described_class.new.post(
+          :quickpay, { mchtId: merchant_id },
+          private_key: other_private_key, public_key: other_public_key
+        )
+
+        expect(response.valid_signature?).to be true
+      end
+
+      it 'falls back to config keys when no overrides are provided' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+               .with { |req|
+                 parsed = URI.decode_www_form(req.body).to_h
+                 AllinpayCnp::Signature.verify(parsed, public_key)
+               }
+               .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        described_class.new.post(:quickpay, { mchtId: merchant_id })
+
+        expect(stub).to have_been_requested
+      end
+    end
   end
 end

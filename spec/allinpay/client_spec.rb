@@ -52,6 +52,10 @@ RSpec.describe AllinpayCnp::Client do
     PEM
   end
 
+  let(:other_keypair) { OpenSSL::PKey::RSA.new(2048) }
+  let(:other_private_key) { other_keypair.to_pem }
+  let(:other_public_key) { other_keypair.public_key.to_pem }
+
   before do
     AllinpayCnp.configure do |config|
       config.merchant_id = merchant_id
@@ -502,6 +506,150 @@ RSpec.describe AllinpayCnp::Client do
       result = client.verify_callback(callback_params)
 
       expect(result).to be false
+    end
+
+    it 'uses the public_key override when provided' do
+      callback_params = {
+        'resultCode' => '0000',
+        'mchtId' => merchant_id,
+        'accessOrderId' => 'ORDER_123'
+      }
+      callback_params['sign'] = AllinpayCnp::Signature.sign(callback_params, other_private_key)
+
+      expect(client.verify_callback(callback_params, public_key: other_public_key)).to be true
+      expect(client.verify_callback(callback_params)).to be false
+    end
+
+    it 'returns false when only an override public_key is supplied but no config and override is wrong' do
+      AllinpayCnp.config.public_key = nil
+
+      callback_params = {
+        'resultCode' => '0000',
+        'mchtId' => merchant_id,
+        'sign' => 'not_a_valid_signature'
+      }
+
+      expect(client.verify_callback(callback_params, public_key: other_public_key)).to be false
+    end
+  end
+
+  describe 'per-call credential overrides' do
+    def signed_with?(req_body, verifying_public_key)
+      parsed = URI.decode_www_form(req_body).to_h
+      AllinpayCnp::Signature.verify(parsed, verifying_public_key)
+    end
+
+    describe '#unified_pay' do
+      it 'signs with the per-call private_key override' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+          .with { |req| signed_with?(req.body, other_public_key) }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.unified_pay(
+          access_order_id: 'ORDER_123', amount: '100.00', currency: 'HKD',
+          urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
+          private_key: other_private_key
+        )
+
+        expect(stub).to have_been_requested
+      end
+
+      it 'does not include private_key or public_key in the request body' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+          .with { |req| !req.body.include?('private_key') && !req.body.include?('public_key') }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.unified_pay(
+          access_order_id: 'ORDER_123', amount: '100.00', currency: 'HKD',
+          urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
+          private_key: other_private_key,
+          public_key: other_public_key
+        )
+
+        expect(stub).to have_been_requested
+      end
+
+      it 'uses the per-call public_key for response signature verification' do
+        response_body = {
+          'resultCode' => '0000',
+          'accessOrderId' => 'ORDER_123',
+          'amount' => '100.00'
+        }
+        response_body['sign'] = AllinpayCnp::Signature.sign(response_body, other_private_key)
+
+        stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+          .to_return(status: 200, body: response_body.to_json)
+
+        response = client.unified_pay(
+          access_order_id: 'ORDER_123', amount: '100.00', currency: 'HKD',
+          urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' },
+          private_key: other_private_key,
+          public_key: other_public_key
+        )
+
+        expect(response.valid_signature?).to be true
+      end
+
+      it 'falls back to config credentials when no overrides are provided' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/unifiedPay')
+          .with { |req| signed_with?(req.body, public_key) }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.unified_pay(
+          access_order_id: 'ORDER_123', amount: '100.00', currency: 'HKD',
+          urls: { notify_url: 'https://example.com/callback', return_url: 'https://example.com/return' }
+        )
+
+        expect(stub).to have_been_requested
+      end
+    end
+
+    describe '#query' do
+      it 'signs with the per-call private_key override' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+          .with { |req| signed_with?(req.body, other_public_key) }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.query(ori_access_order_id: 'ORDER_ORIGINAL', private_key: other_private_key)
+
+        expect(stub).to have_been_requested
+      end
+
+      it 'falls back to config private_key when no override is provided' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+          .with { |req| signed_with?(req.body, public_key) }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.query(ori_access_order_id: 'ORDER_ORIGINAL')
+
+        expect(stub).to have_been_requested
+      end
+    end
+
+    describe '#refund' do
+      it 'signs with the per-call private_key override' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+          .with { |req| signed_with?(req.body, other_public_key) }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.refund(
+          ori_access_order_id: 'ORDER_123',
+          refund_amount: '50.00',
+          private_key: other_private_key
+        )
+
+        expect(stub).to have_been_requested
+      end
+
+      it 'falls back to config private_key when no override is provided' do
+        stub = stub_request(:post, 'https://cnp-test.allinpay.com/gateway/cnp/quickpay')
+          .with { |req| signed_with?(req.body, public_key) }
+          .to_return(status: 200, body: '{"resultCode":"0000"}')
+
+        client.refund(ori_access_order_id: 'ORDER_123', refund_amount: '50.00')
+
+        expect(stub).to have_been_requested
+      end
     end
   end
 end

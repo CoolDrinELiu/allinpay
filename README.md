@@ -7,7 +7,7 @@
 ### Gemfile
 
 ```ruby
-gem 'allinpay_cnp', git: 'https://github.com/your-org/allinpay_cnp'
+gem 'allinpay_cnp', '~> 0.1.6'
 ```
 
 ### 本地安装
@@ -15,7 +15,7 @@ gem 'allinpay_cnp', git: 'https://github.com/your-org/allinpay_cnp'
 ```bash
 cd allinpay_cnp
 gem build allinpay_cnp.gemspec
-gem install allinpay_cnp-0.1.0.gem
+gem install allinpay_cnp-0.1.6.gem
 ```
 
 ## 配置
@@ -29,6 +29,7 @@ AllinpayCnp.configure do |config|
   config.merchant_id = Rails.application.credentials.dig(:allinpay, :merchant_id)
   config.private_key = Rails.application.credentials.dig(:allinpay, :private_key)
   config.public_key  = Rails.application.credentials.dig(:allinpay, :public_key)
+  config.inst_no     = Rails.application.credentials.dig(:allinpay, :inst_no)
   config.environment = Rails.env.production? ? :production : :test
   config.timeout     = 30
   config.logger      = Rails.logger
@@ -44,7 +45,8 @@ AllinpayCnp.configure do |config|
   config.merchant_id = '086310030670001'
   config.private_key = File.read('private_key.pem')
   config.public_key  = File.read('public_key.pem')
-  config.environment = :test  # :test 或 :production
+  config.inst_no     = '00000001'  # 机构模式下必填，直连商户模式不填
+  config.environment = :test       # :test 或 :production
   config.timeout     = 30
   config.logger      = Logger.new($stdout)
 end
@@ -54,12 +56,23 @@ end
 
 | 配置项 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `merchant_id` | String | 是 | 商户号 |
-| `private_key` | String | 是 | 商户私钥 (PEM 格式) |
-| `public_key` | String | 否 | CNP 公钥，用于验证回调签名 |
+| `merchant_id` | String | 条件必填 | 商户号。若每次调用时都传入 `merchant_no`，可不在全局配置 |
+| `private_key` | String | 条件必填 | 商户私钥 (PEM 格式)，用于请求签名。若每次调用时都传入 `private_key`，可不在全局配置 |
+| `public_key` | String | 否 | 系统公钥 (PEM 格式)，用于验证回调/应答签名。亦可在调用时通过 `public_key` / `verify_callback(public_key:)` 传入 |
+| `inst_no` | String | 否 | 机构号，机构模式下必填，直连商户模式留空 |
 | `environment` | Symbol | 否 | `:test` (默认) 或 `:production` |
 | `timeout` | Integer | 否 | 请求超时时间，默认 30 秒 |
 | `logger` | Logger | 否 | 日志对象 |
+
+> 多商户模式下可以不在全局配置 `merchant_id` / `private_key`，而是在每次调用时按商户传入。详见 [多商户模式](#多商户模式-per-call-credentials)。
+
+### 密钥说明
+
+| 密钥 | 用途 | 对应配置 |
+|------|------|----------|
+| 商户私钥 | 请求时计算签名 | `config.private_key` |
+| 系统公钥 | 接收应答/异步通知时验签 | `config.public_key` |
+| 商户公钥 | 上传至通联后台，通联用来验证你的请求签名 | 不需要配置到代码中 |
 
 ## 使用方法
 
@@ -84,6 +97,9 @@ response = client.unified_pay(
   },
   email: 'customer@example.com',
   language: 'zh-hant',  # 可选: zh-hant, zh-hans, en
+  product_info: [       # 商品信息，可选，会以 JSON 字符串形式发送
+    { sku: 'SKU001', productName: 'Test Product', price: '100.00', quantity: '1' }
+  ],
   shipping: {
     first_name: 'Peter',
     last_name: 'Zhang',
@@ -114,7 +130,7 @@ end
 ### 查询订单 (Query)
 
 ```ruby
-response = client.query('ORIGINAL_ORDER_123')
+response = client.query(ori_access_order_id: 'ORIGINAL_ORDER_123')
 
 if response.success?
   puts "状态: #{response.status}"          # SUCCESS, FAIL, PROCESSING
@@ -168,6 +184,33 @@ class WebhooksController < ApplicationController
 end
 ```
 
+## 多商户模式 (Per-call credentials)
+
+如果你的应用需要为多个商户代发请求 (商户模式 / 非机构模式)，每个商户拥有独立的密钥对。可在调用时传入 `private_key` / `public_key` / `merchant_no`，会覆盖全局配置：
+
+```ruby
+response = client.unified_pay(
+  access_order_id: "ORDER_#{Time.now.to_i}",
+  amount: '100.00',
+  currency: 'HKD',
+  urls: { notify_url: '...', return_url: '...' },
+  merchant_no: merchant.allinpay_id,
+  private_key: merchant.allinpay_private_key,
+  public_key:  merchant.allinpay_public_key
+)
+
+# query / refund 同样支持
+client.query(ori_access_order_id: 'ORDER_123',
+             merchant_no: merchant.allinpay_id,
+             private_key: merchant.allinpay_private_key,
+             public_key:  merchant.allinpay_public_key)
+
+# 回调验签时使用对应商户的 public_key
+client.verify_callback(params, public_key: merchant.allinpay_public_key)
+```
+
+未传入时会回退到 `AllinpayCnp.configure` 中的全局配置，因此单商户用法完全向后兼容。
+
 ## Response 对象
 
 所有 API 方法都返回 `Response` 对象：
@@ -216,4 +259,3 @@ lib/
     ├── response.rb           # 响应封装
     └── client.rb             # API 客户端
 ```
-
